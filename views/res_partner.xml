@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="view_pooltech_res_partner_form_inherited" model="ir.ui.view">
+            <field name="name">res.partner.form.pooltech.inherited</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="account.view_partner_property_form"/>
+            <field name="arch" type="xml">
+                 <xpath expr="//group[@name='acc_purchase']" position="after">
+                    <group name="Yotech-Compta" string="Yotech data" colspan="4">
+                        <field name="isacompta_account_number"> IsaCompta account number</field>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</openerp>
