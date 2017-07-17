@@ -42,18 +42,29 @@ class AccountFrFec(models.TransientModel):
         #     'Type Document'      #
         #     ]
 
+# JOURNAL
+# DATE
+# NUMERO ECR
+# N°PIECE
+# COMPTE
+# LIBELLE MOUVEMENT
+# DEBIT
+# CREDIT
+# LETTRAGE
+
         header = [
-            'Date',                #  0
-            'Journal',             #  1
+            'Journal',             #  0
+            'Date',                #  1
             'CompteAuxiliaire',    #  2
-            ' ',                   #  3
-            'CompteProduit',       #  4
-            'Label',               #  5
-            'Debit',               #  6
-            'Credit',              #  7
-            'NumPiece',            #  8
-            'Date Echeance',       #  9
-            'TypeDocument'         # 10
+            'NumPiece',            #  3
+            'Cpte',                #  4
+            'Cpte Nom export',     #  5
+            'Label',               #  6
+            'Debit',               #  7
+            'Credit',              #  8
+            'Origine',             #  9
+            'Date Echeance',       # 10
+            'TypeDocument'         # 11
             ]
 
         company = self.env.user.company_id
@@ -68,22 +79,14 @@ class AccountFrFec(models.TransientModel):
         w = csv.writer(fecfile, delimiter=';')
         w.writerow(header)
 
-# - La colonne A : la date doit être sous le format JJ/MM/AAA (facilement modifiable sous Excel)
-# - La colonne B : le journal c'est ok
-# - La colonne C : le compte auxiliaire doit avoir 6 chiffres ( impératif sinon on doit rajouter les 0 à la main pour pouvoir être intégrer)
-# - La colonne E : les comptes de produits et de tva doivent avoir une longueur de 8 chiffres et le compte client est constitué du 411 + colonne C (soit 9 chiffres)
-# - La colonne F : le libellé c'est ok
-# - Les colonnes G et H : montant débit et crédit c'est ok
-# - La colonnes I : pour le numéro de pièces, il faut enlever FAC et les / car sinon c'est trop long et tout ne rentre pas
-# - La colonne J : pour la date d'échéance, le format est le même que le format de la date en JJ/MM/AAAA
-
-    #aj.code AS JournalCode,
+#            SUBSTRING(rp.isacompta_account_number from 3 for 8) AS isacompta_account_number,
 
         sql_query = '''
         SELECT
+            aj.name AS name,
             TO_CHAR(am.date, 'DD/MM/YYYY') AS EcritureDate,
-            aj.extern_name AS extern_name,
-            SUBSTRING(rp.isacompta_account_number from 3 for 8) AS isacompta_account_number,
+            rp.isacompta_account_number AS isacompta_account_number,
+            TO_CHAR(aml.move_id, '9999999999999') AS EcritureNum,
             aa.code AS CompteIntermed,
             aa.code AS CompteNum,
             COALESCE(replace(rp.name, '|', '/'), '') AS Label,
@@ -92,8 +95,7 @@ class AccountFrFec(models.TransientModel):
             am.name AS name,
             TO_CHAR(aml.date_maturity, 'DD/MM/YYYY') AS date_maturity,
             ai.type AS type,
-            TO_CHAR(aml.move_id, '9999999999999') AS EcritureNum,
-            aa.optimized_export AS optimized_export
+            aml.move_id AS move_id
 
         FROM
             account_move_line aml
@@ -125,40 +127,54 @@ class AccountFrFec(models.TransientModel):
         currentmoveid = 0
         start = False
         for row in self._cr.fetchall():
-            moveid=int(row[11])
+            moveid=int(row[12])
 
             listrow = list(row)
-            #_logger.info("row[3] =) " + str(row[3]) )
-            #_logger.info("row[2] =) " + str(row[2]) )
-            #_logger.info("row[10] =) " + str(row[10]) )
-            optimized_export = False
+
             account_code = False
 
-            listrow[1]= str(row[1])
+            #listrow[2]=  "" + str(row[2]).ljust(6,'0') + ""
+            listrow[2]=  "" + str(row[2]) + ""
 
-            listrow[2]=  "" + str(row[2]).ljust(6,'0') + ""
+            #if row[3].isdigit():
+            #    account_code = int(row[3])
 
-            if row[3].isdigit():
-                account_code = int(row[3])
+            for index_row in range(len(row)):
+                value_error = False
+                try :
+                    value = row[index_row].encode("utf-8")
+                except:
+                    value_error = True
+                if value_error:
+                    value_error = False
+                    try :
+                        value = str(row[index_row])
+                    except:
+                        value = "error index " + str(index_row)
+                if not value_error:
+                    _logger.info("new value =) row[" + str(index_row) + "] " + value)
+                else:
+                    _logger.info(value)
+                index_row = index_row + 1 
 
-            # La colonne C : le compte auxiliaire doit avoir 6 chiffres
-            if row[3] == "41110000":
-                listrow[4] = "411" + str(row[2])
-            else:
-                listrow[4]= str(row[4])
+            # La colonne C : le compte auxiliaire est constitué avec la première lettre du client
+            if listrow[6]:
+                name = listrow[6].replace(' ', '')
+                prefix_account_number = name[0] + name[1]
+                prefix_account_number = prefix_account_number.upper()
+                listrow[5] = prefix_account_number + "-" + listrow[5]
+
+
+            listrow[6]= listrow[6].replace(',', '')
 
             #listrow[5]= str(row[5]) Label
 
             #listrow[6]= str(row[6]) Debit
             #listrow[7]= str(row[7]) Credit
 
-            listrow[8] = listrow[8].replace('FACTURE', '')
-            listrow[8] = listrow[8].replace('FAC', '')
-            listrow[8] = listrow[8].replace('/', '')
-
-            listrow[9]= str(row[9])
-
-            listrow[11]= str(row[11])
+            #listrow[8] = listrow[8].replace('FACTURE', '')
+            #listrow[8] = listrow[8].replace('FAC', '')
+            #listrow[8] = listrow[8].replace('/', '')
 
             # Change JournalName by Extern Name if define
             #if row[8] != None :
@@ -176,54 +192,22 @@ class AccountFrFec(models.TransientModel):
             #listrow[2] = str(row[11])
 
             # Document Type
-            if row[10] == 'out_invoice':
-                listrow[10] = "FACTURE"
-            elif row[10] == 'in_invoice':
-                listrow[10] = "AVOIR"
+            if row[11] == 'out_invoice':
+                listrow[11] = "FACTURE"
+            elif row[11] == 'in_invoice':
+                listrow[11] = "AVOIR"
             else:
-                listrow[10]= ""
-
-            # optimized export or not
-            if row[12] == True:
-                 optimized_export = True
-
-            del listrow[12]
-            del listrow[11]
-
-            if optimized_export:
-                listrowprev = listrow
-                # Start counter
-                if moveid != currentmoveid:
-                    start = True
-                    debitsum = 0
-                    creditsum = 0
-                debitsum += row[6]
-                creditsum += row[7]
-            else:
-                if start:
-                    if debitsum != 0:
-                        listrowprev[6]=str(debitsum).replace('.',',')
-                    else:
-                        listrowprev[6] = "0,0"
-                    if creditsum != 0:
-                        listrowprev[7]=str(creditsum).replace('.',',')
-                    else:
-                        listrowprev[7] = "0,0"
-                    w.writerow([s.encode("utf-8") for s in listrowprev])
-
+                listrow[11]= ""
+            listrow[7] = str(row[7])
+            listrow[8] = str(row[8])
+            #listrow[8] = "test08"
+            listrow[12] = ""
 
 #listrow =) [u'01/02/2017', 'None', 'x000002', u'411100', '41110000', 'SAS M. INNOVATION', '0,00', '              53,92', 'BNK1/2017/0009', '01/02/2017', None, '            64', 'None']
 
+            _logger.info("listrow =) " + str(listrow))
 
-                _logger.info("listrow =) " + str(listrow))
-                listrow[6]= str(row[6])
-                listrow[7]= str(row[7])
-                listrow[6]=listrow[6].replace('.',',')
-                listrow[7]=listrow[7].replace('.',',')
-                w.writerow([s.encode("utf-8") for s in listrow])
-                creditsum = 0
-                debitsum = 0
-                start = False
+            w.writerow([s.encode("utf-8") for s in listrow])
             currentmoveid=moveid
 
         siren = company.vat[4:13]

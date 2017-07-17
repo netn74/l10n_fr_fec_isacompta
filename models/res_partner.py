@@ -16,4 +16,4 @@ _logger = logging.getLogger(__name__)
 class ResPartner(models.Model):
     _inherit = "res.partner"
 
-    isacompta_account_number = fields.Char(string='IsaCompta account number', required=False, translate=False)
+    isacompta_account_number = fields.Char(string='IsaCompta account number', default='', required=False, translate=False)
