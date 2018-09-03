@@ -1,16 +1,23 @@
 # -*- coding: utf-8 -*-
+##############################################################################
+#
+#    Yotech module
+#    Copyright (C) 2014-2018 Yotech (<http://yotech.pro>).
+#
+##############################################################################
 
-import time
-import math
+from odoo import api, fields, models, _
+from odoo.exceptions import UserError
+import odoo
+from odoo.http import request
+from odoo.addons.website.models.website import slugify
 
-from openerp.osv import expression
-from openerp.tools.float_utils import float_round as round
-from openerp.tools import DEFAULT_SERVER_DATETIME_FORMAT
-from openerp.exceptions import UserError, ValidationError
-from openerp import api, fields, models, _
+import odoo.addons.decimal_precision as dp
+from odoo.tools.float_utils import float_round, float_compare
 
 import logging
 _logger = logging.getLogger(__name__)
+
 
 #----------------------------------------------------------
 # Accounts

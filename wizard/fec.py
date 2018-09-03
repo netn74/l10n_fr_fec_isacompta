@@ -54,17 +54,18 @@ class AccountFrFec(models.TransientModel):
 
         header = [
             'Journal',             #  0
-            'Date',                #  1
-            'CompteAuxiliaire',    #  2
-            'NumPiece',            #  3
-            'Cpte',                #  4
-            'Cpte Nom export',     #  5
-            'Label',               #  6
-            'Debit',               #  7
-            'Credit',              #  8
-            'Origine',             #  9
-            'Date Echeance',       # 10
-            'TypeDocument'         # 11
+            'Code Cofidest',       #  1
+            'Date',                #  2
+            'CompteAuxiliaire',    #  3
+            'NumPiece',            #  4
+            'Cpte',                #  5
+            'Cpte Nom export',     #  6
+            'Label',               #  7
+            'Debit',               #  8
+            'Credit',              #  9
+            'Origine',             # 10
+            'Date Echeance',       # 11
+            'TypeDocument'         # 12
             ]
 
         company = self.env.user.company_id
@@ -84,6 +85,7 @@ class AccountFrFec(models.TransientModel):
         sql_query = '''
         SELECT
             aj.name AS name,
+            aj.extern_name AS CodeCofidest,
             TO_CHAR(am.date, 'DD/MM/YYYY') AS EcritureDate,
             rp.isacompta_account_number AS isacompta_account_number,
             TO_CHAR(aml.move_id, '9999999999999') AS EcritureNum,
@@ -97,6 +99,7 @@ class AccountFrFec(models.TransientModel):
             ai.type AS type,
             aml.move_id AS move_id
 
+            
         FROM
             account_move_line aml
             LEFT JOIN account_move am ON am.id=aml.move_id
@@ -127,81 +130,80 @@ class AccountFrFec(models.TransientModel):
         currentmoveid = 0
         start = False
         for row in self._cr.fetchall():
-            moveid=int(row[12])
+            moveid=int(row[13])
 
             listrow = list(row)
 
             account_code = False
 
-            #listrow[2]=  "" + str(row[2]).ljust(6,'0') + ""
-            listrow[2]=  "" + str(row[2]) + ""
+            #listrow[3]=  "" + str(row[3]).ljust(6,'0') + ""
+            listrow[3]=  "" + str(row[3]) + ""
 
-            #if row[3].isdigit():
-            #    account_code = int(row[3])
+            #if row[4].isdigit():
+            #    account_code = int(row[4])
+            
+            _logger.info('ROW LEN =) ' + str(len(row)))
 
             for index_row in range(len(row)):
                 value_error = False
-                try :
-                    value = row[index_row].encode("utf-8")
-                except:
-                    value_error = True
-                if value_error:
-                    value_error = False
-                    try :
-                        value = str(row[index_row])
-                    except:
-                        value = "error index " + str(index_row)
-                if not value_error:
-                    _logger.info("new value =) row[" + str(index_row) + "] " + value)
+                if isinstance(row[index_row],int) or isinstance(row[index_row],float):
+                    value = str(row[index_row])
                 else:
-                    _logger.info(value)
-                index_row = index_row + 1 
+                    try :
+                        if row[index_row]:
+                            value = row[index_row].encode("utf-8")
+                        else:
+                            value =''
+                    except:
+                        value_error = True
+                        value = "Char format error "
+                #_logger.info("new value =) row[" + str(index_row) + "] " + value)
 
             # La colonne C : le compte auxiliaire est constitué avec la première lettre du client
-            if listrow[6]:
-                name = listrow[6].replace(' ', '')
+            if listrow[7]:
+                name = listrow[7].replace(' ', '')
                 prefix_account_number = name[0] + name[1]
                 prefix_account_number = prefix_account_number.upper()
-                listrow[5] = prefix_account_number + "-" + listrow[5]
+                listrow[6] = prefix_account_number + "-" + listrow[6]
 
 
-            listrow[6]= listrow[6].replace(',', '')
+            listrow[7]= listrow[7].replace(',', '')
 
-            #listrow[5]= str(row[5]) Label
+            #listrow[6]= str(row[6]) Label
 
-            #listrow[6]= str(row[6]) Debit
-            #listrow[7]= str(row[7]) Credit
+            #listrow[7]= str(row[7]) Debit
+            #listrow[8]= str(row[8]) Credit
 
-            #listrow[8] = listrow[8].replace('FACTURE', '')
-            #listrow[8] = listrow[8].replace('FAC', '')
-            #listrow[8] = listrow[8].replace('/', '')
+            #listrow[9] = listrow[9].replace('FACTURE', '')
+            #listrow[9] = listrow[9].replace('FAC', '')
+            #listrow[9] = listrow[9].replace('/', '')
 
             # Change JournalName by Extern Name if define
-            #if row[8] != None :
-            #    listrow[2]= str(row[8])
-            # as listrow[7] has been already remove row 8 is infact row 7
+            #if row[9] != None :
+            #    listrow[3]= str(row[9])
+            # as listrow[8] has been already remove row 9 is infact row 8
 
             # Account move Name
-            # as listrow[7] has been twice already remove row 9 is infact row 7
-            #listrow[7] = str(row[9])
-            
-            # Echeance Date
+            # as listrow[7] has been twice already remove row 10 is infact row 8
             #listrow[8] = str(row[10])
             
+            # Echeance Date
+            #listrow[9] = str(row[11])
+            
             # IsaCompta code
-            #listrow[2] = str(row[11])
+            #listrow[3] = str(row[12])
 
             # Document Type
-            if row[11] == 'out_invoice':
-                listrow[11] = "FACTURE"
-            elif row[11] == 'in_invoice':
-                listrow[11] = "AVOIR"
+            if row[12] == 'out_invoice':
+                listrow[12] = "FACTURE"
+            elif row[12] == 'in_invoice':
+                listrow[12] = "AVOIR"
             else:
-                listrow[11]= ""
-            listrow[7] = str(row[7])
+                listrow[12]= ""
             listrow[8] = str(row[8])
-            #listrow[8] = "test08"
-            listrow[12] = ""
+            listrow[9] = str(row[9])
+            #listrow[9] = "test09" 
+            listrow[13] = ""
 
 #listrow =) [u'01/02/2017', 'None', 'x000002', u'411100', '41110000', 'SAS M. INNOVATION', '0,00', '              53,92', 'BNK1/2017/0009', '01/02/2017', None, '            64', 'None']
 
