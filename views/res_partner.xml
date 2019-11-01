@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-        <record id="view_pooltech_res_partner_form_inherited" model="ir.ui.view">
+<!--        <record id="view_pooltech_res_partner_form_inherited" model="ir.ui.view">
             <field name="name">res.partner.form.pooltech.inherited</field>
             <field name="model">res.partner</field>
             <field name="inherit_id" ref="account.view_partner_property_form"/>
@@ -12,6 +12,6 @@
                     </group>
                 </xpath>
             </field>
-        </record>
+        </record> -->
     </data>
 </openerp>

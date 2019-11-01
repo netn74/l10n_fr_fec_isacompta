@@ -3,10 +3,13 @@
 
 # Copyright (C) 2013-2015 Akretion (http://www.akretion.com)
 
-from openerp import models, fields, api, _
-from openerp.exceptions import Warning
+from odoo import models, fields, api, _
+from odoo.exceptions import Warning
+
 import base64
-import StringIO
+
+from io import StringIO
+
 import csv
 
 import logging
@@ -184,10 +187,10 @@ class AccountFrFec(models.TransientModel):
             # Account move Name
             # as listrow[7] has been twice already remove row 9 is infact row 7
             #listrow[7] = str(row[9])
-            
+
             # Echeance Date
             #listrow[8] = str(row[10])
-            
+
             # IsaCompta code
             #listrow[2] = str(row[11])
 
