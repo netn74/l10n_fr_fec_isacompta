@@ -5,9 +5,9 @@
 
 {
     'name': 'France - FEC - IsaCompta',
-    'version': '1.0',
+    'version': '12.0.0',
     'category': 'Localization',
-    'summary': "Fichier d'Échange Informatisé (FEC) for IsaCompta",
+    'summary': "IsaCompta sur la base du Fichier d'Échange Informatisé (FEC)",
     'author': "Yotech",
     'website': 'http://www.yotech.pro',
     'depends': ['l10n_fr_fec','l10n_fr', 'account_accountant'],
